@@ -1,0 +1,17 @@
+local_server:
+   # The address for the local webhook listening server to bind to. 
+   bind_address: 0.0.0.0
+   port: 4567
+
+   # This is the URI to access your local server from the outside world
+   # (accounting for NAT, port forwarding, etc.)
+   base_url: http://1.2.3.4:4567
+
+hipchat:
+   room_name: my_hipchat_room
+
+   # The token must have admin_room and send_notification scopes for the room.
+   api_token: mYH1pCh47t0k3N
+
+   # Seconds before an API request times out.
+   timeout: 2

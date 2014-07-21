@@ -1,7 +1,8 @@
 source 'https://rubygems.org'
 
-gem 'sinatra'
-gem 'thin'
+gem 'httparty'
+gem 'json'
+gem 'configliere'
 
 group :development do
    gem 'guard'
