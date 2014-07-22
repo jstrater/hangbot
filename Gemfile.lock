@@ -1,3 +1,11 @@
+PATH
+  remote: .
+  specs:
+    hangbot (0.1.0)
+      configliere (~> 0.4)
+      httparty (~> 0.13)
+      json (~> 1.8)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -36,6 +44,7 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    rake (10.1.1)
     rb-fsevent (0.9.4)
     rb-inotify (0.9.5)
       ffi (>= 0.5.0)
@@ -47,8 +56,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  configliere
+  bundler (~> 1.6)
   guard
   guard-minitest
-  httparty
-  json
+  hangbot!
+  rake

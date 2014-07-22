@@ -1,7 +1,7 @@
-require 'rubygems'
+#!/usr/bin/env ruby
 
-require 'bundler'
-Bundler.require
+require 'rubygems'
+require 'bundler/setup'
 
 # Make sure lib/ is in the include path
 lib_path = File.expand_path '../lib', File.dirname(__FILE__)

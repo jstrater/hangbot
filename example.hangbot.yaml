@@ -1,4 +1,6 @@
-word_list: bandnames.txt
+# By default, hangbot will use its own default wordlist. If you'd like to use
+# your own, set word_list.
+#word_list: bandnames.txt
 
 local_server:
    # The address for the local webhook listening server to bind to. 

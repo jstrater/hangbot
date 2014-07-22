@@ -90,6 +90,12 @@ def respond_to_hipchat_messages port:4567, address:'0.0.0.0', room_name:nil,
 end
 
 def load_settings!
+   config_file_argument = ARGV[0] ? File.absolute_path(ARGV[0]) : nil
+   config_file = config_file_argument || './hangbot.yaml'
+   default_word_list = File.expand_path(
+      File.join(File.dirname(__FILE__), '../bandnames.txt')
+   )
+
    # Use Configliere to define and read in our settings from hangbot.yaml
    Settings.define 'word_list',
       description:"Word list file"
@@ -106,7 +112,7 @@ def load_settings!
    Settings.define 'hipchat.timeout',
       description:"Seconds before a HipChat API request times out."
    Settings({ # defaults
-      'word_list' => 'word_list.txt',
+      'word_list' => default_word_list,
       'local_server' => {
          'bind_address' => '0.0.0.0',
          'port' => 4567
@@ -115,8 +121,13 @@ def load_settings!
          'timeout' => 30
       }
    })
-   Settings.read './hangbot.yaml'
+   Settings.read config_file
    Settings.resolve!
+
+   # The word_list's path is relative to the config file. Expand it so that we
+   # have the right path later on.
+   Settings['word_list_full_path'] =
+      File.expand_path(Settings['word_list'], File.dirname(config_file))
 end
 
 
@@ -140,7 +151,7 @@ def main
 
    load_settings!
    webhook_url = URI.join Settings['local_server']['base_url'], '/'
-   wordlist = HangmanWordlist.new Settings['word_list']
+   wordlist = HangmanWordlist.new Settings['word_list_full_path']
    game = nil
 
    respond_to_hipchat_messages(
