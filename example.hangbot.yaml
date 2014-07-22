@@ -1,3 +1,5 @@
+word_list: bandnames.txt
+
 local_server:
    # The address for the local webhook listening server to bind to. 
    bind_address: 0.0.0.0

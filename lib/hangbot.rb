@@ -6,6 +6,7 @@ require 'pp'
 require 'configliere'
 require 'logger'
 require 'hangman_game'
+require 'hangman_wordlist'
 
 
 # Set up a webhook and make sure any old leftover hooks are cleaned out
@@ -90,6 +91,8 @@ end
 
 def load_settings!
    # Use Configliere to define and read in our settings from hangbot.yaml
+   Settings.define 'word_list',
+      description:"Word list file"
    Settings.define 'local_server.base_url', required:true,
       description:"URL for your local server, as you would access it from the outside world (accounting for NAT, port forwarding, etc.)"
    Settings.define 'local_server.bind_address',
@@ -97,12 +100,13 @@ def load_settings!
    Settings.define 'local_server.port',
       description:"Port to listen on"
    Settings.define 'hipchat.room_name', required:true,
-      descriptine:"HipChat room to join"
+      description:"HipChat room to join"
    Settings.define 'hipchat.api_token', required:true,
       description:"OAuth bearer token. Must have admin_room and send_notification scopes for the room."
    Settings.define 'hipchat.timeout',
       description:"Seconds before a HipChat API request times out."
    Settings({ # defaults
+      'word_list' => 'word_list.txt',
       'local_server' => {
          'bind_address' => '0.0.0.0',
          'port' => 4567
@@ -136,7 +140,7 @@ def main
 
    load_settings!
    webhook_url = URI.join Settings['local_server']['base_url'], '/'
-
+   wordlist = HangmanWordlist.new Settings['word_list']
    game = nil
 
    respond_to_hipchat_messages(
@@ -157,7 +161,7 @@ def main
          case command
          # New game command
          when 'hangman'
-            game = HangmanGame.new 'top secret'
+            game = HangmanGame.new wordlist.random_word
             "Starting a new game. Fill in the blanks: #{partial_solution_string game}\nMake guesses with \"/guess LETTER\". #{game.remaining_misses} mistakes and you're toast."
 
          # Command to guess a letter
