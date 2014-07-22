@@ -12,7 +12,6 @@ class HipChatParty
    base_uri 'https://api.hipchat.com/v2/'
    headers 'Content-Type' => "application/json"
    format :json
-   debug_output $stderr
 
    # +api_token+ must have admin_room and send_notification scopes.
    #
