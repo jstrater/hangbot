@@ -41,6 +41,11 @@ class HangmanGame
       @guessed_letters.clone
    end
 
+   # Returns the remaining number of missed guesses before the game is lost.
+   def remaining_misses
+      @guess_limit - incorrect_guesses.size
+   end
+
    # Returns an array representing the target word. Letters that have already
    # been guessed are included; letters that have not yet been guessed are nil.
    # Any other characters (spaces, dashes) are included.

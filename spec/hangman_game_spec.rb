@@ -37,6 +37,7 @@ describe HangmanGame do
          @game.guess! 'z'
          @game.incorrect_guesses.must_include 'Z'
          @game.correct_guesses.must_be_empty
+         @game.remaining_misses.must_equal 2
       end
 
       it "must detect a win" do
