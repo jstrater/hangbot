@@ -5,6 +5,8 @@ require 'set'
 # over, and #partial_solution shows the parts of the target word that have been
 # guessed correctly so far.
 class HangmanGame
+   attr_reader :word, :guess_limit
+
    # Creates a new game with +word+ as the target.
    #
    # Raises an ArgumentError if +word+ is invalid.

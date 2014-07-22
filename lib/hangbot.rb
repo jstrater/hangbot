@@ -5,6 +5,7 @@ require 'uri'
 require 'pp'
 require 'configliere'
 require 'logger'
+require 'hangman_game'
 
 
 # Set up a webhook and make sure any old leftover hooks are cleaned out
@@ -61,8 +62,12 @@ def respond_to_hipchat_messages port:4567, address:'0.0.0.0', room_name:nil,
       response_message = yield message
 
       # Send the block's response back to the room
-      logger.info "response: #{response_message}"
-      hipchat.send_room_notification room_name, response_message
+      if response_message
+         logger.info "response: #{response_message}"
+         hipchat.send_room_notification room_name, response_message
+      else
+         logger.info "no response"
+      end
    end
 
    # Shut down cleanly on ctrl-c
@@ -110,6 +115,18 @@ def load_settings!
    Settings.resolve!
 end
 
+
+def partial_solution_string game 
+   game.partial_solution.map{ |char| char || '_' }.join(' ')
+end
+
+def game_status game
+   misses_list = game.incorrect_guesses.empty? ? "" : ": #{game.incorrect_guesses.to_a.join(', ')}"
+   misses_message = "[#{game.incorrect_guesses.size}/#{game.guess_limit} misses#{misses_list}]"
+
+   "#{partial_solution_string game}  #{misses_message}"
+end
+
 def main
    # Set up a logger with the same output format as WEBrick
    logger = Logger.new STDERR
@@ -120,6 +137,8 @@ def main
    load_settings!
    webhook_url = URI.join Settings['local_server']['base_url'], '/'
 
+   game = nil
+
    respond_to_hipchat_messages(
       address:Settings['local_server']['bind_address'],
       port:Settings['local_server']['port'],
@@ -129,7 +148,50 @@ def main
       timeout:Settings['hipchat']['timeout'],
       logger:logger
    ) do |message|
-      "Herp derp"
+      # Split up a "/command [args...]" message into its parts
+      message_parts = /^\/(?<command>\w+)(\s+(?<args>.*))?$/.match message
+      if message_parts
+         command = message_parts['command']
+         args = message_parts['args']
+
+         case command
+         # New game command
+         when 'hangman'
+            game = HangmanGame.new 'top secret'
+            "Starting a new game. Fill in the blanks: #{partial_solution_string game}\nMake guesses with \"/guess LETTER\". #{game.remaining_misses} mistakes and you're toast."
+
+         # Command to guess a letter
+         when 'guess'
+            unless game
+               next "No game in progress. Use /hangman to start a new one."
+            end
+
+            if game.finished?
+               next "Game's over! Use /hangman to start a new one."
+            end
+
+            # See if the command included a valid guess
+            guess = args.strip.upcase
+            unless HangmanGame.acceptable_guess? guess
+               next "The /guess command takes a single letter of the alphabet."
+            end
+
+            if game.guessed? guess
+               next "#{guess} has already been guessed."
+            end
+
+            # Make the guess and let the user know how it turned out
+            game.guess! guess
+            if game.won?
+               "You got it! The answer was #{game.word}. (success)"
+            elsif game.lost?
+               "(sadpanda) Aww, you lost. The correct answer was #{game.word}."
+            else
+               # No win or loss yet -- just print out the game state.
+               game_status game
+            end
+         end
+      end
    end
 end
 
