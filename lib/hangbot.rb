@@ -25,10 +25,14 @@ def remove_hipchat_webhooks hipchat, room_name, webhook_name
    hipchat.delete_webhooks_by_name room_name, webhook_name
 end
 
-# Create a web server that listens on the given address & port for HipChat message notifications. The webhook ID on the notifications will be checked against +webhook_id+.
+# Create a web server that listens on the given address & port for HipChat
+# message notifications. The webhook ID on the notifications will be checked
+# against +webhook_id+.
 #
-# Message contents will be passed to the block, and the block's return value will be posted as a new HipChat room notification.
-def respond_to_hipchat_messages port:4567, address:'0.0.0.0', room_name:nil, webhook_url:nil, api_token:nil, timeout:30, logger:nil
+# Message contents will be passed to the block, and the block's return value
+# will be posted as a new HipChat room notification.
+def respond_to_hipchat_messages port:4567, address:'0.0.0.0', room_name:nil,
+   webhook_url:nil, api_token:nil, timeout:30, logger:nil
    webhook_name = 'hangbot'
 
    # Tell HipChat to let us know when there's a new message in the room
@@ -69,13 +73,41 @@ def respond_to_hipchat_messages port:4567, address:'0.0.0.0', room_name:nil, web
       server.shutdown
    end
 
-   # Start the server here. Any code after server.start will be executed after the server shuts down.
+   # Start the server here. Any code after server.start will be executed after
+   # the server shuts down.
    logger.info "Starting web server at #{address}:#{port} (CTRL-C to stop)"
    server.start
 
    # Clean up the hooks, otherwise HipChat will keep trying to call us.
    logger.info "Cleaning up webhooks"
    remove_hipchat_webhooks hipchat, room_name, webhook_name
+end
+
+def load_settings!
+   # Use Configliere to define and read in our settings from hangbot.yaml
+   Settings.define 'local_server.base_url', required:true,
+      description:"URL for your local server, as you would access it from the outside world (accounting for NAT, port forwarding, etc.)"
+   Settings.define 'local_server.bind_address',
+      description:"Address for the local server to bind to"
+   Settings.define 'local_server.port',
+      description:"Port to listen on"
+   Settings.define 'hipchat.room_name', required:true,
+      descriptine:"HipChat room to join"
+   Settings.define 'hipchat.api_token', required:true,
+      description:"OAuth bearer token. Must have admin_room and send_notification scopes for the room."
+   Settings.define 'hipchat.timeout',
+      description:"Seconds before a HipChat API request times out."
+   Settings({ # defaults
+      'local_server' => {
+         'bind_address' => '0.0.0.0',
+         'port' => 4567
+      },
+      'hipchat' => {
+         'timeout' => 30
+      }
+   })
+   Settings.read './hangbot.yaml'
+   Settings.resolve!
 end
 
 def main
@@ -85,9 +117,7 @@ def main
      "[#{datetime.strftime('%Y-%m-%d %H:%M:%S')}] #{severity}  #{msg}\n"
    end
 
-   # TODO: define setting types
-   Settings.read './hangbot.yaml'
-   Settings.resolve!
+   load_settings!
    webhook_url = URI.join Settings['local_server']['base_url'], '/'
 
    respond_to_hipchat_messages(
